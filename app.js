@@ -7,10 +7,10 @@ app.use(express.json())
 const port = 8000;
 
 const db = mysql.createConnection({ 
-    host     : 'localhost', 
+    host     : 'ip-172-31-18-33.us-west-2.compute.internal', 
     user     : 'root',
-    password : '',
-    database : 'mymessages'
+    password : 'root',
+    database : 'main_app'
     })
 db.connect(function(err) {
         if (err) throw err;
@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/messages', (req, res) => {
-    db.query("SELECT * FROM main_app_message", function (err, result, fields) {
+    db.query("SELECT * FROM mymessages", function (err, result, fields) {
         console.log('Connection result error '+err);
         console.log('no of records is '+result.length);
         res.writeHead(200, { 'Content-Type': 'application/json'});
@@ -35,7 +35,7 @@ app.post('/api/messages', (req, res) => {
     var author = req.body['author'] 
     var message = req.body['message'] 
     var likes = req.body['likes'] 
-    var query = `INSERT INTO main_app_message (uuid, author, message, likes) VALUES ( ?, ?, ?, ?)`;
+    var query = `INSERT INTO mymessages (uuid, author, message, likes) VALUES ( ?, ?, ?, ?)`;
     db.query(query, [uuid, author, message, likes], (err, rows) => {
             if (err) throw err;
             console.log("Row inserted with id = "
