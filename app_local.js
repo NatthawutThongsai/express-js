@@ -21,16 +21,27 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
+app.get('/api/messages/get_by_id/:start_id/:stop_id', (req, res) => { 
+    let start_id = req.params['start_id']
+    let stop_id = req.params['stop_id']
+    db.query("SELECT * FROM mymessages", function (err, result, fields) {
+            console.log('no of records is ' + result.length);
+            if(Number(stop_id)>result.length){
+                stop_id=result.length
+            }
+            let output = result.slice(start_id,stop_id)
+            console.log("slice "+start_id+" : "+stop_id)
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({'content': output }));
+        });
+});
+
 app.get('/api/messages', (req, res) => {
     let last_update = req.body['last_update']
     db.query("SELECT MAX( id ) AS `last_id` FROM updated_change", function (err, result, fields) {
         let count = result[0].last_id
         if (last_update == 0) {
-            db.query("SELECT * FROM mymessages", function (err, result, fields) {
-                console.log('no of records is ' + result.length);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ 'last_update': count, 'content': result }));
-            });
+            res.end(JSON.stringify(count))
         }
         else if (last_update < count) {
             db.query("SELECT * FROM updated_change WHERE id > ? AND id <= ? ", [Number(last_update), count], function (err, result, fields) {
