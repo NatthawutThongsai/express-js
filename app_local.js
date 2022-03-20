@@ -22,10 +22,26 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/messages', (req, res) => {
-    db.query("SELECT * FROM mymessages", function (err, result, fields) {
-        console.log('no of records is ' + result.length);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(result));
+    let last_update = req.body['last_update']
+    db.query("SELECT MAX( id ) AS `last_id` FROM updated_change", function (err, result, fields) {
+        let count = result[0].last_id
+        if (last_update == 0) {
+            db.query("SELECT * FROM mymessages", function (err, result, fields) {
+                console.log('no of records is ' + result.length);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 'last_update': count, 'content': result }));
+            });
+        }
+        else if (last_update < count) {
+            db.query("SELECT * FROM updated_change WHERE id > ? AND id <= ? ", [Number(last_update), count], function (err, result, fields) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 'last_update': count, 'content': result }));
+            });
+        }
+        else {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 'last_update': count}));
+        }
     });
 });
 
@@ -43,12 +59,12 @@ app.post('/api/messages', (req, res) => {
                 console.log('add uuid = ' + uuid)
             })
             var data = {
-                'author':author,
-                'message':message,
-                'likes':likes
+                'author': author,
+                'message': message,
+                'likes': likes
             }
             var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "insert", JSON.stringify(data) ], (err, rows) => {
+            db.query(query_insert_updated, [uuid, "insert", JSON.stringify(data)], (err, rows) => {
                 if (err) throw err;
             })
             res.status(201);
@@ -79,12 +95,12 @@ app.put('/api/messages/:uuid', (req, res) => {
                 console.log('update uuid = ' + uuid)
             })
             var data = {
-                'author':author,
-                'message':message,
-                'likes':likes
+                'author': author,
+                'message': message,
+                'likes': likes
             }
             var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "update", JSON.stringify(data) ], (err, rows) => {
+            db.query(query_insert_updated, [uuid, "update", JSON.stringify(data)], (err, rows) => {
                 if (err) throw err;
             })
             res.status(204);
@@ -108,7 +124,7 @@ app.delete('/api/messages/:uuid', (req, res) => {
                 console.log('delete uuid = ' + uuid)
             })
             var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "delete", "" ], (err, rows) => {
+            db.query(query_insert_updated, [uuid, "delete", ""], (err, rows) => {
                 if (err) throw err;
             })
             res.status(204);
