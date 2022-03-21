@@ -36,22 +36,10 @@ app.get('/api/messages/get_by_offset/', (req, res) => {
 });
 
 app.get('/api/messages', (req, res) => {
-    let last_update = req.body['last_update']
     db.query("SELECT MAX( id ) AS `last_id` FROM updated_change", function (err, result, fields) {
         let count = result[0].last_id
-        if (last_update == 0) {
-            res.end(JSON.stringify(count))
-        }
-        else if (last_update < count) {
-            db.query("SELECT * FROM updated_change WHERE id > ? AND id <= ? ", [Number(last_update), count], function (err, result, fields) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ 'last_update': count, 'content': result }));
-            });
-        }
-        else {
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 'last_update': count}));
-        }
+        res.end(JSON.stringify(count))
+
     });
 });
 
