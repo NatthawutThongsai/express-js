@@ -2,7 +2,7 @@ const express = require('express');
 const mysql = require('mysql')
 const bodyParser = require('body-parser');
 const app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json())
 const port = 8000;
 
@@ -21,36 +21,42 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/api/messages/get_by_offset/', (req, res) => {
-    let page = req.query.page
-    let limit = req.query.limit
-    let offset = Number(page) * Number(limit)
-    const offset_query = "SELECT * FROM mymessages LIMIT " + limit + " OFFSET " + String(offset)
-    db.query(offset_query, function (err, result, fields) {
-        console.log('no of records is ' + result.length);
-        console.log("Page : " + page)
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 'content': result }));
-    });
-
+app.get('/api/messages/get_by_id/:start_id/:stop_id', (req, res) => { 
+    let start_id = req.params['start_id']
+    let stop_id = req.params['stop_id']
+    db.query("SELECT * FROM mymessages", function (err, result, fields) {
+            console.log('no of records is ' + result.length);
+            if(Number(stop_id)>result.length){
+                stop_id=result.length
+            }
+            let output = result.slice(start_id,stop_id)
+            console.log("slice "+start_id+" : "+stop_id)
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({'content': output }));
+        });
 });
 
 app.get('/api/messages', (req, res) => {
     let last_update = req.body['last_update']
     db.query("SELECT MAX( id ) AS `last_id` FROM updated_change", function (err, result, fields) {
         let count = result[0].last_id
+	console.log(count)
+	console.log(last_update)
+	console.log(count<last_update)
         if (last_update == 0) {
             res.end(JSON.stringify(count))
         }
         else if (last_update < count) {
+	    console.log(last_update,count)
             db.query("SELECT * FROM updated_change WHERE id > ? AND id <= ? ", [Number(last_update), count], function (err, result, fields) {
+		console.log(result.length)
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ 'last_update': count, 'content': result }));
             });
         }
         else {
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 'last_update': count }));
+            res.end(JSON.stringify({ 'last_update': count}));
         }
     });
 });

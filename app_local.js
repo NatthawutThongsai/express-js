@@ -2,7 +2,7 @@ const express = require('express');
 const mysql = require('mysql')
 const bodyParser = require('body-parser');
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json())
 const port = 8000;
 
@@ -21,19 +21,18 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/api/messages/get_by_id/:start_id/:stop_id', (req, res) => { 
-    let start_id = req.params['start_id']
-    let stop_id = req.params['stop_id']
-    db.query("SELECT * FROM mymessages", function (err, result, fields) {
+app.get('/api/messages/get_by_offset/', (req, res) => { 
+    let page = req.query.page
+    let limit = req.query.limit
+    let offset = Number(page) * Number(limit)
+    const offset_query = "SELECT * FROM mymessages LIMIT "+ limit + " OFFSET " + String(offset)
+    db.query(offset_query, function (err, result, fields) {
             console.log('no of records is ' + result.length);
-            if(Number(stop_id)>result.length){
-                stop_id=result.length
-            }
-            let output = result.slice(start_id,stop_id)
-            console.log("slice "+start_id+" : "+stop_id)
+            console.log("Page : "+page)
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({'content': output }));
+            res.end(JSON.stringify({'content': result }));
         });
+
 });
 
 app.get('/api/messages', (req, res) => {
