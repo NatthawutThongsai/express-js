@@ -21,17 +21,17 @@ app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
-app.get('/api/messages/get_by_offset/', (req, res) => {
+app.get('/api/messages/get_by_offset/', (req, res) => { 
     let page = req.query.page
     let limit = req.query.limit
     let offset = Number(page) * Number(limit)
-    const offset_query = "SELECT * FROM mymessages LIMIT " + limit + " OFFSET " + String(offset)
+    const offset_query = "SELECT * FROM mymessages LIMIT "+ limit + " OFFSET " + String(offset)
     db.query(offset_query, function (err, result, fields) {
-        console.log('no of records is ' + result.length);
-        console.log("Page : " + page)
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 'content': result }));
-    });
+            console.log('no of records is ' + result.length);
+            console.log("Page : "+page)
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({'content': result }));
+        });
 
 });
 
@@ -50,7 +50,7 @@ app.get('/api/messages', (req, res) => {
         }
         else {
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 'last_update': count }));
+            res.end(JSON.stringify({ 'last_update': count}));
         }
     });
 });
