@@ -36,8 +36,8 @@ app.get('/api/messages/get_by_offset/', (req, res) => {
 });
 
 app.get('/api/messages', (req, res) => {
-    db.query("SELECT MAX( id ) AS `last_id` FROM updated_change", function (err, result, fields) {
-        let count = result[0].last_id
+    db.query("SELECT count(*) AS `count` FROM mymessages", function (err, result, fields) {
+        let count = result[0].count
         res.end(JSON.stringify(count))
 
     });
@@ -55,15 +55,6 @@ app.post('/api/messages', (req, res) => {
             db.query(query_insert_mymessages, [uuid, author, message, likes], (err, rows) => {
                 if (err) throw err;
                 console.log('add uuid = ' + uuid)
-            })
-            var data = {
-                'author': author,
-                'message': message,
-                'likes': likes
-            }
-            var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "insert", JSON.stringify(data)], (err, rows) => {
-                if (err) throw err;
             })
             res.status(201);
             res.send('Suucessful save ' + uuid)
@@ -92,15 +83,6 @@ app.put('/api/messages/:uuid', (req, res) => {
                 if (err) throw err;
                 console.log('update uuid = ' + uuid)
             })
-            var data = {
-                'author': author,
-                'message': message,
-                'likes': likes
-            }
-            var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "update", JSON.stringify(data)], (err, rows) => {
-                if (err) throw err;
-            })
             res.status(204);
             res.send("Suucessful update")
         }
@@ -120,10 +102,6 @@ app.delete('/api/messages/:uuid', (req, res) => {
             db.query(query_delete_mymessages, [uuid], (err, rows) => {
                 if (err) throw err;
                 console.log('delete uuid = ' + uuid)
-            })
-            var query_insert_updated = `INSERT INTO updated_change (uuid, action, data) VALUES ( ?, ?, ? )`;
-            db.query(query_insert_updated, [uuid, "delete", ""], (err, rows) => {
-                if (err) throw err;
             })
             res.status(204);
             res.send("Suucessful delete")
